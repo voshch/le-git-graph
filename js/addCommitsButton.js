@@ -134,11 +134,19 @@ function addCommitsButton() {
     }, 5000);
 
 
-    function closeCommitsTab() {
+    function closeCommitsTab(event) {
         isCommitsTabOpen = false;
         var commitsTabButton = document.getElementById("commits-tab");
         commitsTabButton.addEventListener("click", openCommitsTab);
         newButtonChild.removeAttribute("aria-current");
         newButtonChild.removeAttribute("data-selected-links");
+
+        var clickedTab = event && event.currentTarget ? event.currentTarget : null;
+        if (clickedTab && clickedTab.id !== "commits-tab") {
+            var contentView = document.getElementById("le-git-graph-root");
+            if (contentView) {
+                contentView.remove();
+            }
+        }
     }
 }

@@ -1,9 +1,29 @@
-async function openCommitsTab() {
+function updateUrlForCommitsView() {
+    var pathParts = window.location.pathname.split("/").filter(Boolean);
+    if (pathParts.length < 2) {
+        return;
+    }
+
+    var repoOwner = pathParts[0];
+    var repoName = pathParts[1];
+    var commitsViewUrl = "/" + repoOwner + "/" + repoName + "/commits?le-git-graph=1";
+
+    if ((window.location.pathname + window.location.search) !== commitsViewUrl) {
+        window.history.pushState({ source: "le-git-graph", view: "commits" }, "", commitsViewUrl);
+    }
+}
+
+async function openCommitsTab(event) {
+    if (event) {
+        event.preventDefault();
+    }
+
     isCommitsTabOpen = true;
     var commitsTabButton = document.getElementById("commits-tab");
     commitsTabButton.removeEventListener("click", openCommitsTab);
 
-    showCommitsLoading();
+    await showCommitsLoading();
+    updateUrlForCommitsView();
 
     // Find the navigation bar with fallback selectors
     var parentObject = null;

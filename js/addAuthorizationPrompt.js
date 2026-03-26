@@ -80,7 +80,10 @@ function openAuthorization() {
 }
 
 async function addAuthorizationPrompt(reason) {
-    var contentView = document.getElementsByClassName("clearfix")[0];
+    var contentView = getOrCreateContentView();
+    if (!contentView) {
+        return;
+    }
     await new Promise(function (resolve) {
         chrome.runtime.sendMessage({ action: 'fetchHtml', path: 'html/authorizationPrompt.html' }, function (branchSelectionHtmlText) {
             var newContent = null;

@@ -1,5 +1,8 @@
 async function loadBranchesButton() {
-    var contentView = document.getElementsByClassName("clearfix")[0];
+    var contentView = getOrCreateContentView();
+    if (!contentView) {
+        return;
+    }
     await new Promise(function (resolve) {
         chrome.runtime.sendMessage({ action: 'fetchHtml', path: 'html/branchSelection.html' }, function (branchSelectionHtmlText) {
             var newContent = null;

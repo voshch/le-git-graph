@@ -143,7 +143,10 @@ async function showCommits(commits, branchNames, allCommits, heads, pageNo, allB
   var repoOwner = presentUrl.split('/')[3];
   var repoName = presentUrl.split('/')[4];
   [commits, allCommits] = await getCommitDetails(repoOwner, repoName, commits, allCommits);
-  var contentView = document.getElementsByClassName("clearfix")[0];
+  var contentView = getOrCreateContentView();
+  if (!contentView) {
+    return;
+  }
 
   var commitsContainerDummy = document.createElement("div");
 
