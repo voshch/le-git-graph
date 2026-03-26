@@ -1,5 +1,5 @@
 {
-  "version": "1.4.1",
+  "version": "1.4.2",
   "name": "Le Git Graph Fork - Commits Graph for GitHub",
   "description": "A browser extension that displays the git graph for any GitHub repository. Forked from https://github.com/NirmalScaria/le-git-graph",
   "manifest_version": 3,

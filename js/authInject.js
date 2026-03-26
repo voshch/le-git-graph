@@ -1,12 +1,16 @@
 function authorizationSuccessCallBack(token, userName) {
     console.log("Extension got the token");
     console.log(token);
-    if (token == "FAIL") {
-        var event = new CustomEvent("PassToBackground", { detail: { action: "authDone", status: "FAIL" } });
+    function dispatchSafe(payload) {
+        var safePayload = JSON.stringify(payload);
+        var event = new CustomEvent("PassToBackground", { detail: safePayload });
         window.dispatchEvent(event);
     }
+
+    if (token == "FAIL") {
+        dispatchSafe({ action: "authDone", status: "FAIL" });
+    }
     else {
-        var event = new CustomEvent("PassToBackground", { detail: { action: "authDone", status: "SUCCESS", token: token, userName: userName } });
-        window.dispatchEvent(event);
+        dispatchSafe({ action: "authDone", status: "SUCCESS", token: token, userName: userName });
     }
 }

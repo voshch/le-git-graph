@@ -23,12 +23,23 @@ function injectScript(file_path, tag) {
 
 var authMessageSent = false;
 
+function toSafeAuthPayload(payload) {
+    var source = payload || {};
+    return {
+        action: source.action ? String(source.action) : "authDone",
+        status: source.status ? String(source.status) : "FAIL",
+        token: source.token ? String(source.token) : undefined,
+        userName: source.userName ? String(source.userName) : "",
+        reason: source.reason ? String(source.reason) : undefined,
+    };
+}
+
 function sendAuthDone(payload) {
     if (authMessageSent || !ext || !ext.runtime) {
         return;
     }
     authMessageSent = true;
-    ext.runtime.sendMessage(payload);
+    ext.runtime.sendMessage(toSafeAuthPayload(payload));
 }
 
 if (ext && ext.runtime) {
@@ -112,5 +123,14 @@ if (!handledFromUrl) {
 }
 
 window.addEventListener("PassToBackground", function (evt) {
-    sendAuthDone(evt.detail);
+    var payload = evt.detail;
+    if (typeof payload === "string") {
+        try {
+            payload = JSON.parse(payload);
+        }
+        catch (_err) {
+            payload = { action: "authDone", status: "FAIL", reason: "BAD_CALLBACK_PAYLOAD" };
+        }
+    }
+    sendAuthDone(toSafeAuthPayload(payload));
 }, false);

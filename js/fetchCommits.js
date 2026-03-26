@@ -149,7 +149,6 @@ async function fetchCommits() {
                 oid: branch.target.history.edges[0].node.oid,
             });
             allBranchesObject[branch.name] = branch.target.history.edges[0].node.oid;
-            branch.target.history.edges[0].node.isHead = true;
             return branch;
         })
         await sortCommits(branches, heads, allBranchesObject);

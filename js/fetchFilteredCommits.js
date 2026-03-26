@@ -153,7 +153,6 @@ async function fetchFilteredCommits(selectedBranchNames, selectedBranches, allBr
             });
             branch.target = {}
             branch.target.history = branch.history;
-            branch.target.history.edges[0].node.isHead = true;
             return branch;
         })
         await sortCommits(branches, heads, allBranches);

@@ -20,16 +20,23 @@ async function sortCommits(branches, heads, allBranches) {
     // This loop gets these commits and arranges it into a dictionary
     for (var branch of branches) {
         var branchname = branch.name;
+        var headOid = branch.target.history.edges[0].node.oid;
         var thisCommits = branch.target.history.edges;
         for (var thisCommit in thisCommits) {
-            var commit = thisCommits[thisCommit].node;
-            if (commit.oid in commitsObject && commitsObject[commit.oid].branches != null) {
-                commitsObject[commit.oid].branches.push(branchname);
+            var rawCommit = thisCommits[thisCommit].node;
+            if (rawCommit.oid in commitsObject && commitsObject[rawCommit.oid].branches != null) {
+                commitsObject[rawCommit.oid].branches.push(branchname);
+                if (rawCommit.oid == headOid) {
+                    commitsObject[rawCommit.oid].isHead = true;
+                }
             }
             else {
-                commitsObject[commit.oid] = commit
+                // Clone to a plain object so Firefox Xray wrappers are not mutated directly.
+                var commit = JSON.parse(JSON.stringify(rawCommit));
+                commitsObject[commit.oid] = commit;
                 commit.branches = [branchname];
                 commit.committedDate = parseDate(commit.committedDate);
+                commit.isHead = (commit.oid == headOid);
             }
         }
     }
