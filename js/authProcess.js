@@ -59,8 +59,31 @@ function buildCombinedParams() {
     return params;
 }
 
+function reportCallbackDiagnostics(params) {
+    if (!ext || !ext.runtime) {
+        return;
+    }
+
+    var keys = [];
+    params.forEach(function (_, key) {
+        if (keys.indexOf(key) < 0) {
+            keys.push(key);
+        }
+    });
+
+    var hasToken = !!getFirstDefined(params, ["access_token", "token", "githubToken", "github_token", "oauth_token"]);
+    ext.runtime.sendMessage({
+        action: "authCallbackData",
+        keys: keys,
+        hasToken: hasToken,
+        path: window.location.pathname || "",
+        host: window.location.host || ""
+    });
+}
+
 function handleAuthFromUrl() {
     var params = buildCombinedParams();
+    reportCallbackDiagnostics(params);
     var error = getFirstDefined(params, ["error", "error_description", "status"]);
     if (error && error.toLowerCase() != "success") {
         sendAuthDone({ action: "authDone", status: "FAIL" });
@@ -68,7 +91,13 @@ function handleAuthFromUrl() {
     }
 
     var token = getFirstDefined(params, ["access_token", "token", "githubToken", "github_token", "oauth_token"]);
+    var code = getFirstDefined(params, ["code"]);
     if (!token || token == "FAIL") {
+        if (code) {
+            // Hosted callback reached GitHub code phase but did not provide a token to the extension.
+            sendAuthDone({ action: "authDone", status: "FAIL", reason: "CODE_WITHOUT_TOKEN" });
+            return true;
+        }
         return false;
     }
 

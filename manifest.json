@@ -40,12 +40,8 @@
     },
     {
       "matches": [
-        "*://scaria.dev/github-tree-graph/authorize*",
-        "*://scaria.dev/github-tree-graph/authorize/*",
-        "*://www.scaria.dev/github-tree-graph/authorize*",
-        "*://www.scaria.dev/github-tree-graph/authorize/*",
-        "*://*.scaria.dev/github-tree-graph/authorize*",
-        "*://*.scaria.dev/github-tree-graph/authorize/*"
+        "*://legitgraph.auth.voshch.dev/github-tree-graph/authorize*",
+        "*://legitgraph.auth.voshch.dev/github-tree-graph/authorize/*"
       ],
       "js": [
         "js/authProcess.js"

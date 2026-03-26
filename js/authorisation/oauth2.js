@@ -2,7 +2,7 @@ var oauth2 = {
 
         access_token_url: "https://github.com/login/oauth/access_token",
         authorization_url: "https://github.com/login/oauth/authorize",
-        client_id: "91ddd618eba025e4104e",
+        client_id: "Ov23liymsYDPFUWZiGVs",
         redirect_url: "https://scaria.dev/github-tree-graph/success/",
         scope: "repo:read",
 

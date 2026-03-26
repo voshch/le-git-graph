@@ -1,0 +1,11 @@
+services:
+  legitgraph-oauth-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: legitgraph-oauth-server
+    restart: unless-stopped
+    environment:
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      PORT: 80

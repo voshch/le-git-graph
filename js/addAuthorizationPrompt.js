@@ -65,13 +65,12 @@ function reloadThisPage() {
 function openAuthorization() {
     var authorizationButton = document.getElementById("authorizationType");
     var authorization_url = "https://github.com/login/oauth/authorize";
-    var client_id = "91ddd618eba025e4104e";
-    var redirect_url = "https://scaria.dev/github-tree-graph/authorize?version=2";
+    var client_id = "Ov23liymsYDPFUWZiGVs";
     var scope = "public_repo";
     if (authorizationButton.value == "privateAndPublic") {
         scope = "repo"
     }
-    var url = authorization_url + "?client_id=" + client_id + "&redirect_uri=" + redirect_url + "&scope=" + scope;
+    var url = authorization_url + "?client_id=" + client_id + "&scope=" + scope;
     authFlowCompleted = false;
     clearAuthTimers();
     changeAuthorizationStatus("WAITING");
@@ -84,6 +83,16 @@ function openAuthorization() {
     authMessageListener = function (request, sender, sendResponse) {
         if (request.status == "CALLBACK_LOADED") {
             changeAuthorizationStatus("WAITING", "Callback page reached. Finalizing authorization...");
+            return;
+        }
+
+        if (request.status == "CALLBACK_DATA") {
+            var meta = request.meta || {};
+            var keys = meta.keys || [];
+            var keyText = keys.length > 0 ? keys.join(", ") : "none";
+            var tokenState = meta.hasToken ? "present" : "missing";
+            var callbackInfo = "Callback seen at " + (meta.host || "unknown-host") + (meta.path || "") + ". Params: " + keyText + ". Token: " + tokenState + ".";
+            changeAuthorizationStatus("WAITING", callbackInfo);
             return;
         }
 
@@ -111,7 +120,13 @@ function openAuthorization() {
                 }
             }
             else {
-                failAuth("Authorization failed on callback. Please retry.");
+                var failReason = request.value && request.value.reason ? request.value.reason : "";
+                if (failReason == "CODE_WITHOUT_TOKEN") {
+                    failAuth("OAuth callback returned code only (no token). Hosted callback exchange is failing. Use Custom PAT for now.");
+                }
+                else {
+                    failAuth("Authorization failed on callback. Please retry.");
+                }
             }
         }
     };

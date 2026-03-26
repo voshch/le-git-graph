@@ -53,7 +53,7 @@ try {
             }
 
             var message = { status: status };
-            if (status == "SUCCESS") {
+            if (payload) {
                 message.value = payload;
             }
 
@@ -68,7 +68,7 @@ try {
         });
     }
 
-    function notifyAuthProgress(status) {
+    function notifyAuthProgress(status, meta) {
         getStoredValue(OAUTH_SOURCE_TAB_KEY, function (targetTabId) {
             if (typeof targetTabId === "string") {
                 targetTabId = parseInt(targetTabId, 10);
@@ -76,7 +76,11 @@ try {
             if (!targetTabId) {
                 return;
             }
-            ext.tabs.sendMessage(targetTabId, { status: status }, function () {
+            var message = { status: status };
+            if (meta) {
+                message.meta = meta;
+            }
+            ext.tabs.sendMessage(targetTabId, message, function () {
                 if (ext && ext.runtime) {
                     void ext.runtime.lastError;
                 }
@@ -92,7 +96,7 @@ try {
         }
         else if (request.action == "authDone") {
             if (request.status != "SUCCESS") {
-                sendAuthResult("FAIL");
+                sendAuthResult("FAIL", { reason: request.reason || "UNKNOWN" });
             }
             else {
                 const githubToken = request.token;
@@ -102,6 +106,14 @@ try {
         }
         else if (request.action == "authCallbackLoaded") {
             notifyAuthProgress("CALLBACK_LOADED");
+        }
+        else if (request.action == "authCallbackData") {
+            notifyAuthProgress("CALLBACK_DATA", {
+                keys: request.keys || [],
+                hasToken: !!request.hasToken,
+                path: request.path || "",
+                host: request.host || ""
+            });
         }
         else if (request.action == "freDone") {
             ext.tabs.remove(freTab.id);
