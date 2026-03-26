@@ -1,9 +1,12 @@
 async function fetchFurther(commits, allCommits, heads, pageNo, branchNames, allBranches) {
   var commitsOl = document.getElementById("commitsOl");
   chrome.runtime.sendMessage({ action: 'fetchHtml', path: 'html/commitsLoading.html' }, function (loadingIconText) {
-    var tempDiv = document.createElement('div');
-    tempDiv.innerHTML = loadingIconText || "";
-    var newContent = tempDiv.firstChild;
+    var newContent = null;
+    if (loadingIconText) {
+      var parser = new DOMParser();
+      var doc = parser.parseFromString(loadingIconText, 'text/html');
+      newContent = doc.body.firstChild;
+    }
     if (newContent) {
       commitsOl.appendChild(newContent);
     }

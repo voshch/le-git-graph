@@ -1,10 +1,12 @@
 function showLegend(heads) {
     var legendContainer = document.getElementById("legendContainer");
     var branchButton = legendContainer.querySelector("#branchButton").cloneNode(true);
-    legendContainer.innerHTML = "";
+    while (legendContainer.firstChild) {
+        legendContainer.removeChild(legendContainer.firstChild);
+    }
     for(var head of heads) {
         var newBranch = branchButton.cloneNode(true);
-        newBranch.querySelector("#branchName").innerHTML = head.name;
+        newBranch.querySelector("#branchName").textContent = head.name;
 
         if(document.querySelector('[circlesha="' + head.oid + '"]') == undefined) {
             // Heads contain all the branches of the repo.

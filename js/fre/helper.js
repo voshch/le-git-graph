@@ -48,9 +48,13 @@ async function showToolTip(element, position, head1, head2, description, buttonT
     var hoverCardParent;
     await new Promise(function (resolve) {
         chrome.runtime.sendMessage({ action: 'fetchHtml', path: 'html/tooltip.html' }, function (hoverCardHtmlText) {
-            var tempDiv = document.createElement('div');
-            tempDiv.innerHTML = hoverCardHtmlText || "";
-            hoverCardParent = tempDiv;
+            if (hoverCardHtmlText) {
+                var parser = new DOMParser();
+                var doc = parser.parseFromString(hoverCardHtmlText, 'text/html');
+                hoverCardParent = doc.body;
+            } else {
+                hoverCardParent = document.createElement('div');
+            }
             resolve();
         });
     });
@@ -58,40 +62,42 @@ async function showToolTip(element, position, head1, head2, description, buttonT
     var hoverContent = hoverCard.children[0];
     var hoverHead1 = hoverCard.querySelector("#tooltipHead1");
     if (head1 != "") {
-        hoverHead1.innerHTML = head1;
+        hoverHead1.textContent = head1;
     } else {
         hoverHead1.style.display = "none";
     }
     var hoverHead2 = hoverCard.querySelector("#tooltipHead2");
     if (head2 != "") {
-        hoverHead2.innerHTML = head2;
+        hoverHead2.textContent = head2;
     } else {
         hoverHead2.style.display = "none";
     }
     var hoverDescription = hoverCard.querySelector("#tooltipDescription");
     if (description != "") {
-        hoverDescription.innerHTML = description;
+        hoverDescription.textContent = description;
     } else {
         hoverDescription.style.display = "none";
     }
     var hoverButtons = hoverCard.querySelector("#buttonsSection");
     var buttonRowTemplate = hoverButtons.children[0].cloneNode(true);
-    hoverButtons.innerHTML = "";
+    while (hoverButtons.firstChild) {
+        hoverButtons.removeChild(hoverButtons.firstChild);
+    }
     if (buttonTexts.length == 1) {
         var buttonRow = buttonRowTemplate.cloneNode(true);
-        buttonRow.children[0].innerHTML = buttonTexts[0];
+        buttonRow.children[0].textContent = buttonTexts[0];
         buttonRow.children[0].classList.add(buttonStyles[0]);
         buttonRow.children[0].onclick = buttonActions[0];
         hoverButtons.appendChild(buttonRow);
     }
     else if (buttonTexts.length == 2) {
         var buttonRow = buttonRowTemplate.cloneNode(true);
-        buttonRow.children[0].innerHTML = buttonTexts[0];
+        buttonRow.children[0].textContent = buttonTexts[0];
         buttonRow.children[0].classList.add(buttonStyles[0]);
         buttonRow.children[0].classList.add("mr-1");
         buttonRow.children[0].onclick = buttonActions[0];
         var button2 = buttonRow.children[0].cloneNode(true);
-        button2.innerHTML = buttonTexts[1];
+        button2.textContent = buttonTexts[1];
         button2.classList.add(buttonStyles[1]);
         button2.classList.add("ml-1");
         button2.onclick = buttonActions[1];
@@ -100,19 +106,19 @@ async function showToolTip(element, position, head1, head2, description, buttonT
     }
     else if (buttonTexts.length == 3) {
         var buttonRow = buttonRowTemplate.cloneNode(true);
-        buttonRow.children[0].innerHTML = buttonTexts[0];
+        buttonRow.children[0].textContent = buttonTexts[2];
         buttonRow.children[0].classList.add(buttonStyles[0]);
         buttonRow.children[0].classList.add("mr-1");
         buttonRow.children[0].onclick = buttonActions[0];
         var button2 = buttonRow.children[0].cloneNode(true);
-        button2.innerHTML = buttonTexts[1];
+        button2.textContent = buttonTexts[1];
         button2.classList.add(buttonStyles[1]);
         button2.classList.add("ml-1");
         button2.onclick = buttonActions[1];
         buttonRow.appendChild(button2);
         hoverButtons.appendChild(buttonRow);
         var buttonRow2 = buttonRowTemplate.cloneNode(true);
-        buttonRow2.children[0].innerHTML = buttonTexts[2];
+        buttonRow2.children[0].textContent = buttonTexts[2];
         buttonRow2.children[0].classList.add(buttonStyles[2]);
         buttonRow2.children[0].classList.add("mr-1");
         buttonRow2.children[0].onclick = buttonActions[2];
@@ -141,8 +147,6 @@ async function showToolTip(element, position, head1, head2, description, buttonT
     }
     hoverCard.style.left = posX + "px";
     hoverCard.style.top = posY + "px";
-    var hoverCardContainer = document.createElement("div");
-    hoverCardContainer.innerHTML = hoverCardParent.innerHTML;
     hoverCard.style.display = "block";
     hoverCard.id = "fre-tooltip";
     var body = document.getElementsByTagName("BODY")[0];

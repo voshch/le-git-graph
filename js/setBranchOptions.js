@@ -10,7 +10,7 @@ function setBranchOptions(branches, selectedBranchNames, allBranches) {
     }
     Array.from(branchNames).forEach((branch) => {
         var newChild = existingChild.cloneNode(true);
-        newChild.children[1].innerHTML = branch;
+        newChild.children[1].textContent = branch;
         newChild.setAttribute("branch-name", branch);
         if(selectedBranchNames.includes(branch)){
             newChild.setAttribute("aria-checked", "true");
@@ -42,11 +42,11 @@ function setBranchOptions(branches, selectedBranchNames, allBranches) {
 
     if (branchNames.size == selectedBranchNames.length) {
         branchesContainer.children[0].setAttribute("aria-checked", "true");
-        branchesDropdownButton.innerHTML = "All Branches";
+        branchesDropdownButton.textContent = "All Branches";
     }
     else {
         branchesContainer.children[0].setAttribute("aria-checked", "false");
-        branchesDropdownButton.innerHTML = "Select Branches";
+        branchesDropdownButton.textContent = "Select Branches";
     }
     
     // Action for the "All branches" button

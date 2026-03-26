@@ -2,10 +2,15 @@ async function loadBranchesButton() {
     var contentView = document.getElementsByClassName("clearfix")[0];
     await new Promise(function (resolve) {
         chrome.runtime.sendMessage({ action: 'fetchHtml', path: 'html/branchSelection.html' }, function (branchSelectionHtmlText) {
-            var tempDiv = document.createElement('div');
-            tempDiv.innerHTML = branchSelectionHtmlText || "";
-            var newContent = tempDiv.firstChild;
-            contentView.innerHTML = "";
+            var newContent = null;
+            if (branchSelectionHtmlText) {
+                var parser = new DOMParser();
+                var doc = parser.parseFromString(branchSelectionHtmlText, 'text/html');
+                newContent = doc.body.firstChild;
+            }
+            while (contentView.firstChild) {
+                contentView.removeChild(contentView.firstChild);
+            }
             if (newContent) {
                 contentView.appendChild(newContent);
             }

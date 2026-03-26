@@ -3,12 +3,28 @@ var maxX = 100;
 async function drawCurve(container, startx, starty, endx, endy, color) {
   var firstLineEndY = starty + ((endy - starty - 40) / 2);
   var secondLineStartY = firstLineEndY + 40;
-  container.innerHTML += '<path d = "M ' + startx + ' ' + starty + ' L ' + startx + ' ' + firstLineEndY + ' C ' + startx + ' ' + (parseInt(firstLineEndY) + 20) + ' , ' + endx + ' ' + (parseInt(firstLineEndY) + 20) + ' , ' + endx + ' ' + (parseInt(firstLineEndY) + 40) + ' L ' + endx + ' ' + endy + '" stroke="' + color + '" stroke-width="1" fill = "#00000000"/>';
+  var svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  svgElement.setAttribute('d', 'M ' + startx + ' ' + starty + ' L ' + startx + ' ' + firstLineEndY + ' C ' + startx + ' ' + (parseInt(firstLineEndY) + 20) + ' , ' + endx + ' ' + (parseInt(firstLineEndY) + 20) + ' , ' + endx + ' ' + (parseInt(firstLineEndY) + 40) + ' L ' + endx + ' ' + endy);
+  svgElement.setAttribute('stroke', color);
+  svgElement.setAttribute('stroke-width', '1');
+  svgElement.setAttribute('fill', '#00000000');
+  container.appendChild(svgElement);
 }
 
 async function drawDottedLine(container, startx, starty, color) {
-  container.innerHTML += '<path d = "M ' + startx + ' ' + starty + ' L ' + startx + ' ' + (starty + 10) + '" stroke="' + color + '" stroke-width="1" fill = "#00000000"/>';
-  container.innerHTML += '<path d = "M ' + startx + ' ' + (starty + 10) + ' L ' + startx + ' ' + (starty + 30) + '" stroke="' + color + '" stroke-width="1" stroke-dasharray="2,2" fill = "#00000000"/>';
+  var solidLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  solidLine.setAttribute('d', 'M ' + startx + ' ' + starty + ' L ' + startx + ' ' + (starty + 10));
+  solidLine.setAttribute('stroke', color);
+  solidLine.setAttribute('stroke-width', '1');
+  solidLine.setAttribute('fill', '#00000000');
+  container.appendChild(solidLine);
+  var dashedLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  dashedLine.setAttribute('d', 'M ' + startx + ' ' + (starty + 10) + ' L ' + startx + ' ' + (starty + 30));
+  dashedLine.setAttribute('stroke', color);
+  dashedLine.setAttribute('stroke-width', '1');
+  dashedLine.setAttribute('stroke-dasharray', '2,2');
+  dashedLine.setAttribute('fill', '#00000000');
+  container.appendChild(dashedLine);
 }
 
 var hoveredCommitSha = "";
@@ -18,9 +34,13 @@ async function showCard(commitId, commitDot) {
   var hoverCardParent;
   await new Promise(function (resolve) {
     chrome.runtime.sendMessage({ action: 'fetchHtml', path: 'html/hoverCard.html' }, function (hoverCardHtmlText) {
-      var tempDiv = document.createElement('div');
-      tempDiv.innerHTML = hoverCardHtmlText || "";
-      hoverCardParent = tempDiv;
+      if (hoverCardHtmlText) {
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(hoverCardHtmlText, 'text/html');
+        hoverCardParent = doc.body;
+      } else {
+        hoverCardParent = document.createElement('div');
+      }
       resolve();
     });
   });
@@ -58,7 +78,7 @@ async function addCardContent(commitId, commitDot, hoverCardParent) {
     hour12: true
   });
   var commitDateAndTimeFormatted = "Committed on " + commitDateFormatted + " at " + commitTimeFormatted;
-  hoverCardParent.querySelector("#commit-time-message").innerHTML = commitDateAndTimeFormatted;
+  hoverCardParent.querySelector("#commit-time-message").textContent = commitDateAndTimeFormatted;
   var legendContainer = document.getElementById("legendContainer");
   var headsOf = [];
   for (var i = 0; i < legendContainer.children.length; i++) {
@@ -74,39 +94,44 @@ async function addCardContent(commitId, commitDot, hoverCardParent) {
   else {
     var headIndicationContent = headIndicationSection.querySelector("#head-indication-content");
     var headIndicationItem = headIndicationContent.children[0].cloneNode(true);
-    headIndicationContent.innerHTML = "Head of ";
+    headIndicationContent.textContent = "Head of ";
     for (var i = 0; i < headsOf.length; i++) {
       var thisHeadIndicationItem = headIndicationItem.cloneNode(true);
       var branchIcon = thisHeadIndicationItem.querySelector(".branch-icon-svg");
       branchIcon.style.fill = headsOf[i][1];
-      thisHeadIndicationItem.innerHTML += headsOf[i][0];
+      thisHeadIndicationItem.appendChild(document.createTextNode(headsOf[i][0]));
       headIndicationContent.appendChild(thisHeadIndicationItem);
     }
   }
   var parentIndicationContent = hoverCardParent.querySelector("#parent-indication-content");
   var parentIndicationItem = parentIndicationContent.children[0].cloneNode(true);
-  parentIndicationContent.innerHTML = parents.length < 2 ? "Parent: " : "Parents: ";
+  parentIndicationContent.textContent = parents.length < 2 ? "Parent: " : "Parents: ";
   for (var i = 0; i < parents.length; i++) {
     var thisParentIndicationItem = parentIndicationItem.cloneNode(true);
-    thisParentIndicationItem.innerHTML += parents[i];
+    thisParentIndicationItem.appendChild(document.createTextNode(parents[i]));
     parentIndicationContent.appendChild(thisParentIndicationItem);
   }
   var branchesIndicationContent = hoverCardParent.querySelector("#branches-indication-content");
   var branchesIndicationItem = branchesIndicationContent.children[0].cloneNode(true);
-  branchesIndicationContent.innerHTML = "";
+  while (branchesIndicationContent.firstChild) {
+    branchesIndicationContent.removeChild(branchesIndicationContent.firstChild);
+  }
   for (var i = 0; i < commit.branches.length; i++) {
     var thisBranchIndicationItem = branchesIndicationItem.cloneNode(true);
     var branchIcon = thisBranchIndicationItem.querySelector(".branch-icon-svg");
     branchIcon.style.fill = colorDict[commit.branches[i]];
-    thisBranchIndicationItem.innerHTML += commit.branches[i];
+    thisBranchIndicationItem.appendChild(document.createTextNode(commit.branches[i]));
     branchesIndicationContent.appendChild(thisBranchIndicationItem);
   }
   var additionCountWrapper = hoverCardParent.querySelector("#addition-count");
   var deletionCountWrapper = hoverCardParent.querySelector("#deletion-count");
-  additionCountWrapper.innerHTML = commit.additions;
-  deletionCountWrapper.innerHTML = commit.deletions;
+  additionCountWrapper.textContent = commit.additions;
+  deletionCountWrapper.textContent = commit.deletions;
   var hoverCardContainer = document.getElementById("hoverCardContainer");
-  hoverCardContainer.innerHTML = hoverCardParent.innerHTML;
+  while (hoverCardContainer.firstChild) {
+    hoverCardContainer.removeChild(hoverCardContainer.firstChild);
+  }
+  hoverCardContainer.appendChild(hoverCardParent.firstChild.cloneNode(true));
   hoverCardContainer.children[0].style.display = 'block';
 }
 
@@ -117,15 +142,39 @@ async function hideCard() {
 }
 
 function drawCommit(commit) {
-  var toAppend = ""
+  var fragment = document.createDocumentFragment();
   var cx = commit.cx;
   var cy = commit.cy;
   if (commit.isHead) {
-    toAppend += '<circle class = "commitHeadDot" cx="' + cx + '" cy="' + cy + '" r="7" stroke="' + commit.color + '" fill = "#00000000" circlesha = "' + commit.oid + '"/>';
+    var commentHeadCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    commentHeadCircle.setAttribute('class', 'commitHeadDot');
+    commentHeadCircle.setAttribute('cx', cx);
+    commentHeadCircle.setAttribute('cy', cy);
+    commentHeadCircle.setAttribute('r', '7');
+    commentHeadCircle.setAttribute('stroke', commit.color);
+    commentHeadCircle.setAttribute('fill', '#00000000');
+    commentHeadCircle.setAttribute('circlesha', commit.oid);
+    fragment.appendChild(commentHeadCircle);
   }
-  toAppend += '<circle class = "commitDot" cx="' + cx + '" cy="' + cy + '" r="4" fill="' + commit.color + '" circlesha = "' + commit.oid + '"/>';
-  toAppend += '<circle class = "commitDotHidden" cx="' + cx + '" cy="' + cy + '" r="19" fill="#ffffff00" circlesha = "' + commit.oid + '"/>';
-  return (toAppend);
+  var commitDotCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  commitDotCircle.setAttribute('class', 'commitDot');
+  commitDotCircle.setAttribute('cx', cx);
+  commitDotCircle.setAttribute('cy', cy);
+  commitDotCircle.setAttribute('r', '4');
+  commitDotCircle.setAttribute('fill', commit.color);
+  commitDotCircle.setAttribute('circlesha', commit.oid);
+  fragment.appendChild(commitDotCircle);
+  
+  var commitDotHiddenCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  commitDotHiddenCircle.setAttribute('class', 'commitDotHidden');
+  commitDotHiddenCircle.setAttribute('cx', cx);
+  commitDotHiddenCircle.setAttribute('cy', cy);
+  commitDotHiddenCircle.setAttribute('r', '19');
+  commitDotHiddenCircle.setAttribute('fill', '#ffffff00');
+  commitDotHiddenCircle.setAttribute('circlesha', commit.oid);
+  fragment.appendChild(commitDotHiddenCircle);
+  
+  return fragment;
 }
 
 function onHoveringCommit(e) {
@@ -192,7 +241,9 @@ async function drawGraph(commits, commitDict) {
 
   var commitsGraphContainer = document.getElementById("graphSvg");
 
-  commitsGraphContainer.innerHTML = "";
+  while (commitsGraphContainer.firstChild) {
+    commitsGraphContainer.removeChild(commitsGraphContainer.firstChild);
+  }
   commitsGraphContainer.style.height = commitsContainerHeight + 'px';
   var yPos = 0;
 
@@ -233,7 +284,13 @@ async function drawGraph(commits, commitDict) {
     yPos += (thisCommitItem.offsetHeight - 1) / 2;
     commits[i].cx = 30 + (commitXIndex * 14);
     commits[i].cy = yPos;
-    commitsGraphContainer.innerHTML += '<circle cx="' + (30 + (commitXIndex * 14)) + '" cy="' + yPos + '" r="1" fill="' + commit.color + '" circlesha = "' + commit.oid + '"/>';
+    var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', 30 + (commitXIndex * 14));
+    circle.setAttribute('cy', yPos);
+    circle.setAttribute('r', '1');
+    circle.setAttribute('fill', commit.color);
+    circle.setAttribute('circlesha', commit.oid);
+    commitsGraphContainer.appendChild(circle);
     yPos += thisCommitItem.offsetHeight / 2;
   }
 
@@ -272,11 +329,10 @@ async function drawGraph(commits, commitDict) {
   }
 
   var yPos = 0;
-  var finalToAppend = "";
   for (var commit of commits) {
-    finalToAppend += drawCommit(commit);
+    var commitFragment = drawCommit(commit);
+    commitsGraphContainer.appendChild(commitFragment);
   }
-  commitsGraphContainer.innerHTML += finalToAppend;
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       for (var commit of commits) {

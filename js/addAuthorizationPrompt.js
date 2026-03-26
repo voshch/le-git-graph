@@ -6,25 +6,25 @@ async function changeAuthorizationStatus(status) {
     if (status == "WAITING") {
         authorizationDropdownButton.style.display = 'none';
         authorizationButton.style.display = 'inline-block';
-        authorizationTItle.innerHTML = "Waiting for authorization";
-        authorizationDescription.innerHTML = "Please complete the authorization process in the popup window.";
-        authorizationButton.innerHTML = 'Waiting...';
+        authorizationTItle.textContent = "Waiting for authorization";
+        authorizationDescription.textContent = "Please complete the authorization process in the popup window.";
+        authorizationButton.textContent = 'Waiting...';
         authorizationButton.classList.remove('btn-primary');
         authorizationButton.removeEventListener("click", openAuthorization);
     }
     if (status == "SUCCESS") {
-        authorizationTItle.innerHTML = "Authorization successful";
-        authorizationDescription.innerHTML = "Reload this page to see the commits.";
-        authorizationButton.innerHTML = 'Reload Now';
+        authorizationTItle.textContent = "Authorization successful";
+        authorizationDescription.textContent = "Reload this page to see the commits.";
+        authorizationButton.textContent = 'Reload Now';
         authorizationButton.classList.add('btn-primary');
         authorizationButton.addEventListener("click", reloadThisPage);
     }
     if (status == "FAIL") {
         authorizationButton.style.display = 'none';
         authorizationDropdownButton.style.display = 'inline-block';
-        authorizationTItle.innerHTML = "Authorization failed";
-        authorizationDescription.innerHTML = "Please try again.";
-        authorizationButton.innerHTML = 'Try Again';
+        authorizationTItle.textContent = "Authorization failed";
+        authorizationDescription.textContent = "Please try again.";
+        authorizationButton.textContent = 'Try Again';
         authorizationButton.classList.add('btn-primary');
         authorizationButton.addEventListener("click", openAuthorization);
     }
@@ -83,10 +83,15 @@ async function addAuthorizationPrompt(reason) {
     var contentView = document.getElementsByClassName("clearfix")[0];
     await new Promise(function (resolve) {
         chrome.runtime.sendMessage({ action: 'fetchHtml', path: 'html/authorizationPrompt.html' }, function (branchSelectionHtmlText) {
-            var tempDiv = document.createElement('div');
-            tempDiv.innerHTML = branchSelectionHtmlText || "";
-            var newContent = tempDiv.firstChild;
-            contentView.innerHTML = "";
+            var newContent = null;
+            if (branchSelectionHtmlText) {
+                var parser = new DOMParser();
+                var doc = parser.parseFromString(branchSelectionHtmlText, 'text/html');
+                newContent = doc.body.firstChild;
+            }
+            while (contentView.firstChild) {
+                contentView.removeChild(contentView.firstChild);
+            }
             if (!newContent) {
                 resolve();
                 return;
@@ -104,7 +109,7 @@ async function addAuthorizationPrompt(reason) {
                 authorizationButton.disabled = false;
                 authorizationButton.style.cursor = "pointer";
                 authorizationButton.value = "Authorize with Le Git Graph";
-                authorizationButton.innerHTML = "Authorize with Le Git Graph";
+                    authorizationButton.textContent = "Authorize with Le Git Graph";
                 customPATInput.style.display = "none";
             });
             publicOnlyButton.addEventListener("click", function (e) {
@@ -112,14 +117,14 @@ async function addAuthorizationPrompt(reason) {
                 authorizationButton.disabled = false;
                 authorizationButton.style.cursor = "pointer";
                 authorizationButton.value = "Authorize with Le Git Graph";
-                authorizationButton.innerHTML = "Authorize with Le Git Graph";
+                authorizationButton.textContent = "Authorize with Le Git Graph";
                 customPATInput.style.display = "none";
             });
             customPATButton.addEventListener("click", function (e) {
                 authorizationTypeButton.value = "customPAT";
                 customPATInput.style.display = "block";
                 authorizationButton.value = "Set PAT";
-                authorizationButton.innerHTML = "Set PAT";
+                authorizationButton.textContent = "Set PAT";
                 if (customPATInput.value.length > 0) {
                     authorizationButton.disabled = false;
                     authorizationButton.style.cursor = "pointer";
@@ -129,7 +134,7 @@ async function addAuthorizationPrompt(reason) {
                     authorizationButton.style.cursor = "not-allowed";
                 }
             });
-            authorizationReason.innerHTML = reason;
+            authorizationReason.textContent = reason;
             contentView.appendChild(newContent);
             var customPATInput = document.getElementsByClassName("custom-pat-input")[0];
             customPATInput.addEventListener("input", function (e) {

@@ -154,8 +154,13 @@ async function showCommits(commits, branchNames, allCommits, heads, pageNo, allB
   [commits, commitDict] = assignColors(commits, heads);
   await new Promise(function (resolve) {
     chrome.runtime.sendMessage({ action: 'fetchHtml', path: 'html/commitsContainer.html' }, function (commitsContainerHtmlText) {
-      var tempDiv = document.createElement('div');
-      tempDiv.innerHTML = commitsContainerHtmlText || "";
+      if (commitsContainerHtmlText) {
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(commitsContainerHtmlText, 'text/html');
+        var tempDiv = doc.body;
+      } else {
+        var tempDiv = document.createElement('div');
+      }
       commitsOutsideContainer = tempDiv.querySelector("#commits-outside-container");
       commitsContainer = tempDiv.querySelector("#commits-container");
       resolve();
@@ -164,9 +169,12 @@ async function showCommits(commits, branchNames, allCommits, heads, pageNo, allB
 
   await new Promise(function (resolve) {
     chrome.runtime.sendMessage({ action: 'fetchHtml', path: 'html/commitItem.html' }, function (commitItemHtmlText) {
-      var tempDiv = document.createElement('div');
-      tempDiv.innerHTML = commitItemHtmlText || "";
-      var commitItem = tempDiv.firstChild;
+      var commitItem = null;
+      if (commitItemHtmlText) {
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(commitItemHtmlText, 'text/html');
+        commitItem = doc.body.firstChild;
+      }
 
       if (!commitItem) {
         resolve();
@@ -181,7 +189,8 @@ async function showCommits(commits, branchNames, allCommits, heads, pageNo, allB
         for (var parent of commit.parents) {
           parents.push(parent.node.oid.substring(0, 7));
         }
-        newCommitItem.querySelector("#commitMessage").innerHTML = commit.messageHeadlineHTML;
+        var commitMessageEl = newCommitItem.querySelector("#commitMessage");
+        commitMessageEl.textContent = commit.messageHeadlineHTML;
         newCommitItem.querySelector("#commitMessage").setAttribute("href", "/" + repoOwner + "/" + repoName + "/commit/" + commit.oid);
         newCommitItem.querySelector("#avatarBody").setAttribute("aria-label", commit.authorLogin);
         newCommitItem.querySelector("#hoverCard").setAttribute("data-hovercard-url", "/users/" + commit.authorLogin + "/hovercard");
@@ -190,7 +199,7 @@ async function showCommits(commits, branchNames, allCommits, heads, pageNo, allB
         newCommitItem.querySelector("#copyFullSHA").setAttribute("value", commit.oid);
         newCommitItem.querySelector("#commitLink").setAttribute("href", "/" + repoOwner + "/" + repoName + "/commit/" + commit.oid);
         newCommitItem.querySelector("#commitTreeLink").setAttribute("href", "/" + repoOwner + "/" + repoName + "/tree/" + commit.oid);
-        newCommitItem.querySelector("#commitLink").innerHTML = commit.oid.substring(0, 7);
+        newCommitItem.querySelector("#commitLink").textContent = commit.oid.substring(0, 7);
         newCommitItem.querySelector("#statusDetails").setAttribute("data-deferred-details-content-url", "/" + repoOwner + "/" + repoName + "/commit/" + commit.oid + "/status-details");
         if (commit.statusCheckRollup == "SUCCESS") {
           newCommitItem.querySelector("#statusDetails .commit-status-failure").remove();
@@ -199,7 +208,8 @@ async function showCommits(commits, branchNames, allCommits, heads, pageNo, allB
         } else {
           newCommitItem.querySelector("#statusDetails").remove();
         }
-        newCommitItem.querySelector("#viewAllCommits").innerHTML = commit.authorLogin;
+        var viewAllCommitsEl = newCommitItem.querySelector("#viewAllCommits");
+        viewAllCommitsEl.textContent = commit.authorLogin;
         newCommitItem.querySelector("#relativeTime").innerText = relativeTime(commit.committedDate);
         if (commit.hasUserData) {
           newCommitItem.querySelector("#avatarImage").setAttribute("src", commit.authorAvatar + "&s=40");

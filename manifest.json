@@ -1,7 +1,7 @@
 {
   "version": "1.4.1",
-  "name": "Le Git Graph - Commits Graph for GitHub",
-  "description": "A browser extension that displays the git graph for any GitHub repository.",
+  "name": "Le Git Graph Fork - Commits Graph for GitHub",
+  "description": "A browser extension that displays the git graph for any GitHub repository. Forked from https://github.com/NirmalScaria/le-git-graph",
   "manifest_version": 3,
   "content_scripts": [
     {
@@ -58,7 +58,10 @@
   },
   "browser_specific_settings": {
     "gecko": {
-      "id": "{fd903445-e572-42dd-90be-ae63dd5840ea}"
+      "id": "legitgraph@voshch.dev",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
     }
   },
   "icons": {
@@ -68,7 +71,8 @@
     "128": "/images/le_git_graph128.png"
   },
   "background": {
-    "service_worker": "js/serviceWorker.js"
+    "service_worker": "js/serviceWorker.js",
+    "scripts": ["js/serviceWorker.js"]
   },
   "web_accessible_resources": [
     {
