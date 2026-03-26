@@ -1,3 +1,5 @@
+var ext = typeof globalThis["chrome"] !== "undefined" ? globalThis["chrome"] : (typeof browser !== "undefined" ? browser : null);
+
 function getRepoContentHost() {
     return document.querySelector(".application-main #repo-content-pjax-container, .application-main #js-repo-pjax-container, .application-main");
 }
@@ -53,7 +55,7 @@ async function showCommitsLoading() {
     removeNativeRepoContent();
 
     await new Promise(function (resolve) {
-        chrome.runtime.sendMessage({ action: 'fetchHtml', path: 'html/commitsLoading.html' }, function (commitsLoadingHtmlText) {
+        ext.runtime.sendMessage({ action: 'fetchHtml', path: 'html/commitsLoading.html' }, function (commitsLoadingHtmlText) {
             var newContent = null;
             if (commitsLoadingHtmlText) {
                 var parser = new DOMParser();

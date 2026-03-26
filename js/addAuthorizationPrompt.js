@@ -1,4 +1,10 @@
-async function changeAuthorizationStatus(status) {
+var ext = typeof globalThis["chrome"] !== "undefined" ? globalThis["chrome"] : (typeof browser !== "undefined" ? browser : null);
+var authMessageListener = null;
+var authTimeoutId = null;
+var authPopupWatchId = null;
+var authFlowCompleted = false;
+
+async function changeAuthorizationStatus(status, customDescription) {
     var authorizationTItle = document.getElementById("authorizationTitle");
     var authorizationDescription = document.getElementById("authorizationDescription");
     var authorizationButton = document.getElementById("authorizationStatusButton");
@@ -7,7 +13,7 @@ async function changeAuthorizationStatus(status) {
         authorizationDropdownButton.style.display = 'none';
         authorizationButton.style.display = 'inline-block';
         authorizationTItle.textContent = "Waiting for authorization";
-        authorizationDescription.textContent = "Please complete the authorization process in the popup window.";
+        authorizationDescription.textContent = customDescription || "Please complete the authorization process in the popup window.";
         authorizationButton.textContent = 'Waiting...';
         authorizationButton.classList.remove('btn-primary');
         authorizationButton.removeEventListener("click", openAuthorization);
@@ -23,11 +29,33 @@ async function changeAuthorizationStatus(status) {
         authorizationButton.style.display = 'none';
         authorizationDropdownButton.style.display = 'inline-block';
         authorizationTItle.textContent = "Authorization failed";
-        authorizationDescription.textContent = "Please try again.";
+        authorizationDescription.textContent = customDescription || "Please try again.";
         authorizationButton.textContent = 'Try Again';
         authorizationButton.classList.add('btn-primary');
         authorizationButton.addEventListener("click", openAuthorization);
     }
+}
+
+function clearAuthTimers() {
+    if (authTimeoutId) {
+        clearTimeout(authTimeoutId);
+        authTimeoutId = null;
+    }
+    if (authPopupWatchId) {
+        clearInterval(authPopupWatchId);
+        authPopupWatchId = null;
+    }
+}
+
+function failAuth(reason) {
+    authFlowCompleted = true;
+    clearAuthTimers();
+    changeAuthorizationStatus("FAIL", reason);
+}
+
+function completeAuthSuccess() {
+    authFlowCompleted = true;
+    clearAuthTimers();
 }
 
 function reloadThisPage() {
@@ -44,39 +72,69 @@ function openAuthorization() {
         scope = "repo"
     }
     var url = authorization_url + "?client_id=" + client_id + "&redirect_uri=" + redirect_url + "&scope=" + scope;
+    authFlowCompleted = false;
+    clearAuthTimers();
     changeAuthorizationStatus("WAITING");
-    chrome.runtime.sendMessage({ action: "startListening" });
-    chrome.runtime.onMessage.addListener(
-        function (request, sender, sendResponse) {
-            if (request.status == "SUCCESS" || request.status == "FAIL") {
-                if (request.status == "SUCCESS") {
-                    var githubToken = request.value.token;
-                    var userName = request.value.userName;
-                    storeLocalToken(githubToken);
-                    storeLocalUserName(userName);
-                    var url = window.location.href;
-                    var paramsObj = {};
-                    if (url.indexOf("?") > -1) {
-                        var params = url.split("?")[1].split("&");
-                        for (var i = 0; i < params.length; i++) {
-                            var param = params[i].split("=");
-                            paramsObj[param[0]] = param[1];
-                        }
+    ext.runtime.sendMessage({ action: "startListening" });
+
+    if (authMessageListener) {
+        ext.runtime.onMessage.removeListener(authMessageListener);
+    }
+
+    authMessageListener = function (request, sender, sendResponse) {
+        if (request.status == "CALLBACK_LOADED") {
+            changeAuthorizationStatus("WAITING", "Callback page reached. Finalizing authorization...");
+            return;
+        }
+
+        if (request.status == "SUCCESS" || request.status == "FAIL") {
+            if (request.status == "SUCCESS") {
+                completeAuthSuccess();
+                var githubToken = request.value.token;
+                var userName = request.value.userName;
+                storeLocalToken(githubToken);
+                storeLocalUserName(userName);
+                var url = window.location.href;
+                var paramsObj = {};
+                if (url.indexOf("?") > -1) {
+                    var params = url.split("?")[1].split("&");
+                    for (var i = 0; i < params.length; i++) {
+                        var param = params[i].split("=");
+                        paramsObj[param[0]] = param[1];
                     }
-                    if (paramsObj['fre'] == "true") {
-                        window.location.href = url + "&resume=true";
-                    }
-                    else {
-                        changeAuthorizationStatus("SUCCESS");
-                    }
+                }
+                if (paramsObj['fre'] == "true") {
+                    window.location.href = url + "&resume=true";
                 }
                 else {
-                    changeAuthorizationStatus("FAIL");
+                    changeAuthorizationStatus("SUCCESS");
                 }
             }
+            else {
+                failAuth("Authorization failed on callback. Please retry.");
+            }
         }
-    );
-    window.open(url, "oauth2_popup", "width=800,height=600");
+    };
+
+    ext.runtime.onMessage.addListener(authMessageListener);
+
+    authTimeoutId = setTimeout(function () {
+        if (!authFlowCompleted) {
+            failAuth("Timed out waiting for callback. If popup closed, reopen and try again.");
+        }
+    }, 120000);
+
+    var popupWindow = window.open(url, "oauth2_popup", "width=800,height=600");
+    if (!popupWindow) {
+        failAuth("Popup blocked by browser. Allow popups for github.com and try again.");
+        return;
+    }
+
+    authPopupWatchId = setInterval(function () {
+        if (!authFlowCompleted && popupWindow.closed) {
+            failAuth("Authorization popup was closed before completion.");
+        }
+    }, 500);
 }
 
 async function addAuthorizationPrompt(reason) {
@@ -85,7 +143,7 @@ async function addAuthorizationPrompt(reason) {
         return;
     }
     await new Promise(function (resolve) {
-        chrome.runtime.sendMessage({ action: 'fetchHtml', path: 'html/authorizationPrompt.html' }, function (branchSelectionHtmlText) {
+        ext.runtime.sendMessage({ action: 'fetchHtml', path: 'html/authorizationPrompt.html' }, function (branchSelectionHtmlText) {
             var newContent = null;
             if (branchSelectionHtmlText) {
                 var parser = new DOMParser();

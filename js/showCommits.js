@@ -1,3 +1,5 @@
+var ext = typeof globalThis["chrome"] !== "undefined" ? globalThis["chrome"] : (typeof browser !== "undefined" ? browser : null);
+
 function assignColors(commits, heads) {
   var headOids = new Set();
   for (var head of heads) {
@@ -156,7 +158,7 @@ async function showCommits(commits, branchNames, allCommits, heads, pageNo, allB
   var commitDict;
   [commits, commitDict] = assignColors(commits, heads);
   await new Promise(function (resolve) {
-    chrome.runtime.sendMessage({ action: 'fetchHtml', path: 'html/commitsContainer.html' }, function (commitsContainerHtmlText) {
+    ext.runtime.sendMessage({ action: 'fetchHtml', path: 'html/commitsContainer.html' }, function (commitsContainerHtmlText) {
       if (commitsContainerHtmlText) {
         var parser = new DOMParser();
         var doc = parser.parseFromString(commitsContainerHtmlText, 'text/html');
@@ -171,7 +173,7 @@ async function showCommits(commits, branchNames, allCommits, heads, pageNo, allB
   });
 
   await new Promise(function (resolve) {
-    chrome.runtime.sendMessage({ action: 'fetchHtml', path: 'html/commitItem.html' }, function (commitItemHtmlText) {
+    ext.runtime.sendMessage({ action: 'fetchHtml', path: 'html/commitItem.html' }, function (commitItemHtmlText) {
       var commitItem = null;
       if (commitItemHtmlText) {
         var parser = new DOMParser();

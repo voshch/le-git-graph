@@ -1,3 +1,5 @@
+var ext = typeof globalThis["chrome"] !== "undefined" ? globalThis["chrome"] : (typeof browser !== "undefined" ? browser : null);
+
 document.getElementById("demoImage").onclick = function() {
-    chrome.tabs.create({url: "https://github.com/NirmalScaria/le-git-graph"});
+    ext.tabs.create({url: "https://github.com/NirmalScaria/le-git-graph"});
 }

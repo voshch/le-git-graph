@@ -1,10 +1,12 @@
+var ext = typeof globalThis["chrome"] !== "undefined" ? globalThis["chrome"] : (typeof browser !== "undefined" ? browser : null);
+
 async function loadBranchesButton() {
     var contentView = getOrCreateContentView();
     if (!contentView) {
         return;
     }
     await new Promise(function (resolve) {
-        chrome.runtime.sendMessage({ action: 'fetchHtml', path: 'html/branchSelection.html' }, function (branchSelectionHtmlText) {
+        ext.runtime.sendMessage({ action: 'fetchHtml', path: 'html/branchSelection.html' }, function (branchSelectionHtmlText) {
             var newContent = null;
             if (branchSelectionHtmlText) {
                 var parser = new DOMParser();

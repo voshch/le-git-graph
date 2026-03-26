@@ -1,6 +1,8 @@
+var ext = typeof globalThis["chrome"] !== "undefined" ? globalThis["chrome"] : (typeof browser !== "undefined" ? browser : null);
+
 async function fetchFurther(commits, allCommits, heads, pageNo, branchNames, allBranches) {
   var commitsOl = document.getElementById("commitsOl");
-  chrome.runtime.sendMessage({ action: 'fetchHtml', path: 'html/commitsLoading.html' }, function (loadingIconText) {
+  ext.runtime.sendMessage({ action: 'fetchHtml', path: 'html/commitsLoading.html' }, function (loadingIconText) {
     var newContent = null;
     if (loadingIconText) {
       var parser = new DOMParser();

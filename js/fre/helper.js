@@ -1,3 +1,5 @@
+var ext = typeof globalThis["chrome"] !== "undefined" ? globalThis["chrome"] : (typeof browser !== "undefined" ? browser : null);
+
 function createOverlay() {
     var overlay = document.createElement("div");
     overlay.style.display = 'none';
@@ -47,7 +49,7 @@ function focusOnItem(element, padding, elementAction = null) {
 async function showToolTip(element, position, head1, head2, description, buttonTexts, buttonStyles, buttonActions) {
     var hoverCardParent;
     await new Promise(function (resolve) {
-        chrome.runtime.sendMessage({ action: 'fetchHtml', path: 'html/tooltip.html' }, function (hoverCardHtmlText) {
+        ext.runtime.sendMessage({ action: 'fetchHtml', path: 'html/tooltip.html' }, function (hoverCardHtmlText) {
             if (hoverCardHtmlText) {
                 var parser = new DOMParser();
                 var doc = parser.parseFromString(hoverCardHtmlText, 'text/html');
@@ -196,5 +198,5 @@ async function keepCheckingForAuth(successCallback, failureCallback) {
 }
 
 function closeFre() {
-    chrome.runtime.sendMessage({ action: "freDone" });
+    ext.runtime.sendMessage({ action: "freDone" });
 }

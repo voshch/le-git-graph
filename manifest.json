@@ -3,6 +3,9 @@
   "name": "Le Git Graph Fork - Commits Graph for GitHub",
   "description": "A browser extension that displays the git graph for any GitHub repository. Forked from https://github.com/NirmalScaria/le-git-graph",
   "manifest_version": 3,
+  "permissions": [
+    "storage"
+  ],
   "content_scripts": [
     {
       "matches": [
@@ -37,6 +40,10 @@
     },
     {
       "matches": [
+        "*://scaria.dev/github-tree-graph/authorize*",
+        "*://scaria.dev/github-tree-graph/authorize/*",
+        "*://www.scaria.dev/github-tree-graph/authorize*",
+        "*://www.scaria.dev/github-tree-graph/authorize/*",
         "*://*.scaria.dev/github-tree-graph/authorize*",
         "*://*.scaria.dev/github-tree-graph/authorize/*"
       ],

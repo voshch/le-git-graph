@@ -1,4 +1,5 @@
 var maxX = 100;
+var ext = typeof globalThis["chrome"] !== "undefined" ? globalThis["chrome"] : (typeof browser !== "undefined" ? browser : null);
 
 async function drawCurve(container, startx, starty, endx, endy, color) {
   var firstLineEndY = starty + ((endy - starty - 40) / 2);
@@ -33,7 +34,7 @@ async function showCard(commitId, commitDot) {
   hoveredCommitSha = commitId;
   var hoverCardParent;
   await new Promise(function (resolve) {
-    chrome.runtime.sendMessage({ action: 'fetchHtml', path: 'html/hoverCard.html' }, function (hoverCardHtmlText) {
+    ext.runtime.sendMessage({ action: 'fetchHtml', path: 'html/hoverCard.html' }, function (hoverCardHtmlText) {
       if (hoverCardHtmlText) {
         var parser = new DOMParser();
         var doc = parser.parseFromString(hoverCardHtmlText, 'text/html');
