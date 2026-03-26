@@ -81,58 +81,64 @@ function openAuthorization() {
 
 async function addAuthorizationPrompt(reason) {
     var contentView = document.getElementsByClassName("clearfix")[0];
-    var branchSelectionHtml = chrome.runtime.getURL('html/authorizationPrompt.html');
-    await fetch(branchSelectionHtml).then(response => response.text()).then(branchSelectionHtmlText => {
-        var tempDiv = document.createElement('div');
-        tempDiv.innerHTML = branchSelectionHtmlText;
-        var newContent = tempDiv.firstChild;
-        contentView.innerHTML = "";
-        var authorizationButton = newContent.getElementsByClassName("authorizeButton")[0];
-        var authorizationReason = newContent.getElementsByClassName("authorizationReason")[0];
-        var authorizationTypeButton = newContent.getElementsByClassName("authorizationType")[0];
-        authorizationButton.addEventListener("click", proceedForAuthorization);
-        var privateAndPublicButton = newContent.getElementsByClassName("private-and-public-button")[0];
-        var customPATButton = newContent.getElementsByClassName("custom-pat-button")[0];
-        var publicOnlyButton = newContent.getElementsByClassName("public-only-button")[0];
-        var customPATInput = document.getElementsByClassName("custom-pat-input")[0];
-        privateAndPublicButton.addEventListener("click", function (e) {
-            authorizationTypeButton.value = "privateAndPublic";
-            authorizationButton.disabled = false;
-            authorizationButton.style.cursor = "pointer";
-            authorizationButton.value = "Authorize with Le Git Graph";
-            authorizationButton.innerHTML = "Authorize with Le Git Graph";
-            customPATInput.style.display = "none";
-        });
-        publicOnlyButton.addEventListener("click", function (e) {
-            authorizationTypeButton.value = "publicOnly";
-            authorizationButton.disabled = false;
-            authorizationButton.style.cursor = "pointer";
-            authorizationButton.value = "Authorize with Le Git Graph";
-            authorizationButton.innerHTML = "Authorize with Le Git Graph";
-            customPATInput.style.display = "none";
-        });
-        customPATButton.addEventListener("click", function (e) {
-            authorizationTypeButton.value = "customPAT";
-            customPATInput.style.display = "block";
-            authorizationButton.value = "Set PAT";
-            authorizationButton.innerHTML = "Set PAT";
-            if (customPATInput.value.length > 0) {
+    await new Promise(function (resolve) {
+        chrome.runtime.sendMessage({ action: 'fetchHtml', path: 'html/authorizationPrompt.html' }, function (branchSelectionHtmlText) {
+            var tempDiv = document.createElement('div');
+            tempDiv.innerHTML = branchSelectionHtmlText || "";
+            var newContent = tempDiv.firstChild;
+            contentView.innerHTML = "";
+            if (!newContent) {
+                resolve();
+                return;
+            }
+            var authorizationButton = newContent.getElementsByClassName("authorizeButton")[0];
+            var authorizationReason = newContent.getElementsByClassName("authorizationReason")[0];
+            var authorizationTypeButton = newContent.getElementsByClassName("authorizationType")[0];
+            authorizationButton.addEventListener("click", proceedForAuthorization);
+            var privateAndPublicButton = newContent.getElementsByClassName("private-and-public-button")[0];
+            var customPATButton = newContent.getElementsByClassName("custom-pat-button")[0];
+            var publicOnlyButton = newContent.getElementsByClassName("public-only-button")[0];
+            var customPATInput = document.getElementsByClassName("custom-pat-input")[0];
+            privateAndPublicButton.addEventListener("click", function (e) {
+                authorizationTypeButton.value = "privateAndPublic";
                 authorizationButton.disabled = false;
                 authorizationButton.style.cursor = "pointer";
-            }
-            else {
-                authorizationButton.disabled = true;
-                authorizationButton.style.cursor = "not-allowed";
-            }
-        });
-        authorizationReason.innerHTML = reason;
-        contentView.appendChild(newContent);
-        var customPATInput = document.getElementsByClassName("custom-pat-input")[0];
-        customPATInput.addEventListener("input", function (e) {
-            if (customPATInput.value.length > 0) {
+                authorizationButton.value = "Authorize with Le Git Graph";
+                authorizationButton.innerHTML = "Authorize with Le Git Graph";
+                customPATInput.style.display = "none";
+            });
+            publicOnlyButton.addEventListener("click", function (e) {
+                authorizationTypeButton.value = "publicOnly";
                 authorizationButton.disabled = false;
                 authorizationButton.style.cursor = "pointer";
-            }
+                authorizationButton.value = "Authorize with Le Git Graph";
+                authorizationButton.innerHTML = "Authorize with Le Git Graph";
+                customPATInput.style.display = "none";
+            });
+            customPATButton.addEventListener("click", function (e) {
+                authorizationTypeButton.value = "customPAT";
+                customPATInput.style.display = "block";
+                authorizationButton.value = "Set PAT";
+                authorizationButton.innerHTML = "Set PAT";
+                if (customPATInput.value.length > 0) {
+                    authorizationButton.disabled = false;
+                    authorizationButton.style.cursor = "pointer";
+                }
+                else {
+                    authorizationButton.disabled = true;
+                    authorizationButton.style.cursor = "not-allowed";
+                }
+            });
+            authorizationReason.innerHTML = reason;
+            contentView.appendChild(newContent);
+            var customPATInput = document.getElementsByClassName("custom-pat-input")[0];
+            customPATInput.addEventListener("input", function (e) {
+                if (customPATInput.value.length > 0) {
+                    authorizationButton.disabled = false;
+                    authorizationButton.style.cursor = "pointer";
+                }
+            });
+            resolve();
         });
     });
     return;

@@ -1,22 +1,12 @@
-// This function fetches sufficient commits from the API
-// so that the order can be assured to be maintained.
-// Then this function calls the drawGraph function which
-// will clear the existing graph and redraw it.
-
-// The idea is to fetch the last 20 commits in the history
-// of each of the last 10 commits that are displayed.
 async function fetchFurther(commits, allCommits, heads, pageNo, branchNames, allBranches) {
-  // commits array just contains the last 10 commits so that their 
-  // 10 levels of history can be fetched.
-
-  // Adding the loader to the UI
   var commitsOl = document.getElementById("commitsOl");
-  var loadingIcon = chrome.runtime.getURL('html/commitsLoading.html');
-  fetch(loadingIcon).then(response => response.text()).then(loadingIconText => {
+  chrome.runtime.sendMessage({ action: 'fetchHtml', path: 'html/commitsLoading.html' }, function (loadingIconText) {
     var tempDiv = document.createElement('div');
-    tempDiv.innerHTML = loadingIconText;
+    tempDiv.innerHTML = loadingIconText || "";
     var newContent = tempDiv.firstChild;
-    commitsOl.appendChild(newContent);
+    if (newContent) {
+      commitsOl.appendChild(newContent);
+    }
   });
 
   var presentUrl = window.location.href;
@@ -92,10 +82,6 @@ async function fetchFurther(commits, allCommits, heads, pageNo, branchNames, all
     }
   }
 
-  // The main fetchFurther algorithm fetches 20 commits before each of the 10 displayed commits.
-  // As there could be many overlap between the history of different branches,
-  // many of the commits would be duplicates. This algorithm removes duplicates, while keeping the
-  // details of commits previously fetched from API. [If already fetched]
   var commitObject = {};
 
   for (var newCommit of allCommits) {

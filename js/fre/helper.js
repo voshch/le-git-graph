@@ -6,9 +6,6 @@ function createOverlay() {
     body.appendChild(overlay);
 
 }
-
-// Adds a transclucent overlay over all elements except the one
-// passed as argument. Helps to focus the element.
 function focusOnItem(element, padding, elementAction = null) {
     if (element == undefined) {
         element = document.createElement("div");
@@ -47,18 +44,15 @@ function focusOnItem(element, padding, elementAction = null) {
     pointerEventCatcher.style.zIndex = "998";
     body.appendChild(pointerEventCatcher);
 }
-
-// Element : The element to which the tooltip is to be attached
-// Position : The position of the tooltip relative to the element
-//      - left-top , left-bottom , right-top , right-bottom
-//      - top-left , top-right , bottom-left , bottom-right
 async function showToolTip(element, position, head1, head2, description, buttonTexts, buttonStyles, buttonActions) {
     var hoverCardParent;
-    var hoverCardHtml = chrome.runtime.getURL('html/tooltip.html');
-    await fetch(hoverCardHtml).then(response => response.text()).then(hoverCardHtmlText => {
-        var tempDiv = document.createElement('div');
-        tempDiv.innerHTML = hoverCardHtmlText;
-        hoverCardParent = tempDiv;
+    await new Promise(function (resolve) {
+        chrome.runtime.sendMessage({ action: 'fetchHtml', path: 'html/tooltip.html' }, function (hoverCardHtmlText) {
+            var tempDiv = document.createElement('div');
+            tempDiv.innerHTML = hoverCardHtmlText || "";
+            hoverCardParent = tempDiv;
+            resolve();
+        });
     });
     var hoverCard = hoverCardParent.firstChild;
     var hoverContent = hoverCard.children[0];
