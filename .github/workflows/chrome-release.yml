@@ -8,9 +8,9 @@ jobs:
   publish-chrome-web-store:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
-          ref: chrome-release
+          ref: main
         name: Checkout the repository
       - run: zip -r chrome-release.zip *
         name: Zip the extension
